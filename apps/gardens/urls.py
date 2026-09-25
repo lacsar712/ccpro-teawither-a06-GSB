@@ -40,4 +40,16 @@ urlpatterns = [
         views.BatchDeleteView.as_view(),
         name="batch_delete",
     ),
+    path("duty/", views.DutyCardListView.as_view(), name="duty_list"),
+    path("duty/new/", views.DutyCardCreateView.as_view(), name="duty_create"),
+    path(
+        "duty/<int:pk>/edit/",
+        views.DutyCardUpdateView.as_view(),
+        name="duty_edit",
+    ),
+    path(
+        "duty/<int:pk>/delete/",
+        views.DutyCardDeleteView.as_view(),
+        name="duty_delete",
+    ),
 ]

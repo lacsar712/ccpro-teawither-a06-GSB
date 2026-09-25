@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -12,8 +13,14 @@ from django.views.generic import (
     UpdateView,
 )
 
-from .forms import GardenForm, TroughForm, WitherBatchForm
-from .models import Garden, Trough, WitherBatch
+from .forms import (
+    GardenForm,
+    TroughForm,
+    WitherBatchForm,
+    WitherDutyCardForm,
+)
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
+from .services import wither_capacity
 
 
 def _wants_htmx(request):
@@ -44,6 +51,15 @@ class GardenListView(LoginRequiredMixin, ListView):
     model = Garden
     template_name = "gardens/list.html"
     context_object_name = "gardens"
+
+    def get_queryset(self):
+        # 每行附带当日容量快照（最新值班卡上限 + 当前萎凋中数），
+        # 与改态校验共用 services.wither_capacity 的计数口径。
+        today = timezone.localdate()
+        gardens = list(Garden.objects.all())
+        for g in gardens:
+            g.capacity = wither_capacity(g, today)
+        return gardens
 
     def get(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
@@ -199,4 +215,59 @@ class BatchDeleteView(LoginRequiredMixin, DeleteView):
 
     def form_valid(self, form):
         messages.success(self.request, "萎凋批次已删除")
+        return super().form_valid(form)
+
+
+# ---- WitherDutyCard ----
+
+
+class DutyCardListView(LoginRequiredMixin, ListView):
+    model = WitherDutyCard
+    template_name = "dutycards/list.html"
+    context_object_name = "cards"
+
+    def get_queryset(self):
+        return WitherDutyCard.objects.select_related("garden").all()
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        if _wants_htmx(request):
+            html = render_to_string(
+                "dutycards/_table.html",
+                {"cards": self.object_list},
+                request=request,
+            )
+            return HttpResponse(html)
+        return super().get(request, *args, **kwargs)
+
+
+class DutyCardCreateView(LoginRequiredMixin, CreateView):
+    model = WitherDutyCard
+    form_class = WitherDutyCardForm
+    template_name = "dutycards/form.html"
+    success_url = reverse_lazy("duty_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "值班卡已创建，上限即刻生效")
+        return super().form_valid(form)
+
+
+class DutyCardUpdateView(LoginRequiredMixin, UpdateView):
+    model = WitherDutyCard
+    form_class = WitherDutyCardForm
+    template_name = "dutycards/form.html"
+    success_url = reverse_lazy("duty_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "值班卡已更新，新上限即刻作用于后续改态")
+        return super().form_valid(form)
+
+
+class DutyCardDeleteView(LoginRequiredMixin, DeleteView):
+    model = WitherDutyCard
+    template_name = "dutycards/confirm_delete.html"
+    success_url = reverse_lazy("duty_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "值班卡已删除")
         return super().form_valid(form)

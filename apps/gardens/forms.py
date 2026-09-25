@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Garden, Trough, WitherBatch
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
 
 
 class GardenForm(forms.ModelForm):
@@ -25,6 +25,25 @@ class TroughForm(forms.ModelForm):
             "loadKg": forms.NumberInput(attrs={"class": "input", "step": "0.01"}),
             "status": forms.Select(attrs={"class": "input"}),
         }
+
+
+class WitherDutyCardForm(forms.ModelForm):
+    class Meta:
+        model = WitherDutyCard
+        fields = ["garden", "dutyDate", "shiftName", "maxOnDuty", "supervisor"]
+        widgets = {
+            "garden": forms.Select(attrs={"class": "input"}),
+            "dutyDate": forms.DateInput(
+                attrs={"class": "input", "type": "date"}, format="%Y-%m-%d"
+            ),
+            "shiftName": forms.TextInput(attrs={"class": "input"}),
+            "maxOnDuty": forms.NumberInput(attrs={"class": "input", "min": 0}),
+            "supervisor": forms.TextInput(attrs={"class": "input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["dutyDate"].input_formats = ["%Y-%m-%d"]
 
 
 class WitherBatchForm(forms.ModelForm):

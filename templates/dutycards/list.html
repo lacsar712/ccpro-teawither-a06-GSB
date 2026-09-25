@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}萎凋值班{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>萎凋值班</h1>
+  <div class="actions">
+    <button class="btn btn-secondary btn-sm"
+            hx-get="{% url 'duty_list' %}"
+            hx-target="#duty-table"
+            hx-swap="innerHTML">刷新列表</button>
+    <a class="btn" href="{% url 'duty_create' %}">新建值班卡</a>
+  </div>
+</div>
+<div class="card" id="duty-table">
+  {% include "dutycards/_table.html" %}
+</div>
+{% endblock %}

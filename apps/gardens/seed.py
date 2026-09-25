@@ -3,11 +3,11 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import Garden, Trough, WitherBatch
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
 
 
 def ensure_seed_data():
-    """Idempotent seed: users + sample gardens/troughs/batches."""
+    """Idempotent seed: users + sample gardens/troughs/batches/duty cards."""
     User = get_user_model()
 
     if not User.objects.filter(username="admin").exists():
@@ -28,6 +28,24 @@ def ensure_seed_data():
         name="竹影台二号园",
         altitudeBand="600-800m",
         notes="背风缓坡",
+    )
+
+    # 当日值班卡须先于萎凋中槽位建立（改入萎凋中受上限约束）。
+    # 一号园上限 1 且随后即有一槽萎凋中，用于演示超限拒绝。
+    today = timezone.localdate()
+    WitherDutyCard.objects.create(
+        garden=g1,
+        dutyDate=today,
+        shiftName="早班",
+        maxOnDuty=1,
+        supervisor="王守一",
+    )
+    WitherDutyCard.objects.create(
+        garden=g2,
+        dutyDate=today,
+        shiftName="早班",
+        maxOnDuty=2,
+        supervisor="李青",
     )
 
     t1 = Trough.objects.create(
