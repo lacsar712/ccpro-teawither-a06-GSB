@@ -53,8 +53,20 @@ python manage.py runserver 0.0.0.0:4100
 1. **Garden（茶园）**：`name`、`altitudeBand`、`notes`
 2. **Trough（萎凋槽）**：归属茶园、`troughCode`、`cultivar`、`loadKg`、状态 `loading|withering|ready`；同一茶园内槽位编号唯一
 3. **WitherBatch（萎凋批次）**：归属槽位、`startedAt`、`targetMoisture`、`actualMoisture`（可空）、`rollGrade`
+4. **WitherDutyCard（萎凋值班卡）**：归属茶园、`dutyDate`（值班日）、`shiftName`（班次名）、`maxOnDuty`（计划在岗槽数上限）、`supervisor`（值班主管名）；同一茶园同日同班次唯一
 
-**业务规则**：将槽位状态设为 `ready`（可下槽）时，若最新批次的 `actualMoisture` 为空或大于 40，抛出中文 `ValidationError`。
+**业务规则**：
+
+- 将槽位状态设为 `ready`（可下槽）时，若最新批次的 `actualMoisture` 为空或大于 40，抛出中文 `ValidationError`。
+- 将槽位改入 `withering`（萎凋中）时，受当日值班卡上限约束（见下）。
+
+### 萎凋在岗上限 · 计数口径
+
+- **计数**：该园当前状态为「萎凋中」的槽数（实时状态，不分班次、不按批次）。
+- **上限**：该园「值班日 = 今天」的最新值班卡的 `maxOnDuty`；同日多张班次卡时取**最近更新**的一张。
+- **校验时机**：槽位由「装叶中」改「萎凋中」、由「可下槽」改回「萎凋中」、或新建槽位直接置「萎凋中」；已处「萎凋中」的槽重复保存不重复占名额。
+- **拒绝条件**：当日无值班卡（提示先建卡），或当前萎凋中槽数已达上限。
+- **生效时机**：上限修改保存后立即作用于后续改态；改态校验与茶园/值班卡列表共用同一计数函数（`count_withering` / `latest_duty_card`）。
 
 ## 种子数据
 
@@ -63,6 +75,8 @@ python manage.py seed_data
 ```
 
 幂等：已有茶园则只保证账号存在。亦可在环境变量 `TEAWITHER_AUTO_SEED=1` 时于 `post_migrate` 自动播种。
+
+种子含当日值班卡：一号园「早班」上限 1（已有一槽萎凋中，可演示超限拒绝）；二号园「早班」上限 3。
 
 ## 目录结构
 

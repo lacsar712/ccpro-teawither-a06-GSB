@@ -1,6 +1,7 @@
 from django import forms
+from django.utils import timezone
 
-from .models import Garden, Trough, WitherBatch
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
 
 
 class GardenForm(forms.ModelForm):
@@ -25,6 +26,27 @@ class TroughForm(forms.ModelForm):
             "loadKg": forms.NumberInput(attrs={"class": "input", "step": "0.01"}),
             "status": forms.Select(attrs={"class": "input"}),
         }
+
+
+class WitherDutyCardForm(forms.ModelForm):
+    class Meta:
+        model = WitherDutyCard
+        fields = ["garden", "dutyDate", "shiftName", "maxOnDuty", "supervisor"]
+        widgets = {
+            "garden": forms.Select(attrs={"class": "input"}),
+            "dutyDate": forms.DateInput(
+                attrs={"class": "input", "type": "date"}, format="%Y-%m-%d"
+            ),
+            "shiftName": forms.TextInput(attrs={"class": "input"}),
+            "maxOnDuty": forms.NumberInput(attrs={"class": "input", "min": 0}),
+            "supervisor": forms.TextInput(attrs={"class": "input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["dutyDate"].input_formats = ["%Y-%m-%d"]
+        if not self.is_bound and not (self.instance and self.instance.pk):
+            self.initial["dutyDate"] = timezone.localdate()
 
 
 class WitherBatchForm(forms.ModelForm):
@@ -60,7 +82,5 @@ class WitherBatchForm(forms.ModelForm):
             "%Y-%m-%d %H:%M",
         ]
         if self.instance and self.instance.pk and self.instance.startedAt:
-            from django.utils import timezone
-
             local = timezone.localtime(self.instance.startedAt)
             self.initial["startedAt"] = local.strftime("%Y-%m-%dT%H:%M")

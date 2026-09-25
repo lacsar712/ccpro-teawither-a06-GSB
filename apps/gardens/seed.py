@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from .models import Garden, Trough, WitherBatch
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
 
 
 def ensure_seed_data():
@@ -28,6 +28,24 @@ def ensure_seed_data():
         name="竹影台二号园",
         altitudeBand="600-800m",
         notes="背风缓坡",
+    )
+
+    # 当日值班卡须先于「萎凋中」槽位建立（改态校验要求当日有卡）。
+    # 一号园上限 1 且已有一槽萎凋中：新槽改入萎凋中将被拒绝。
+    today = timezone.localdate()
+    WitherDutyCard.objects.create(
+        garden=g1,
+        dutyDate=today,
+        shiftName="早班",
+        maxOnDuty=1,
+        supervisor="陈望舒",
+    )
+    WitherDutyCard.objects.create(
+        garden=g2,
+        dutyDate=today,
+        shiftName="早班",
+        maxOnDuty=3,
+        supervisor="李寄岚",
     )
 
     t1 = Trough.objects.create(

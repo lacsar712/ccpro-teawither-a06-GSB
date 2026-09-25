@@ -4,6 +4,8 @@
     <tr>
       <th>名称</th>
       <th>海拔带</th>
+      <th>今日上限</th>
+      <th>当前萎凋中</th>
       <th>备注</th>
       <th>操作</th>
     </tr>
@@ -13,6 +15,12 @@
     <tr>
       <td>{{ g.name }}</td>
       <td>{{ g.altitudeBand }}</td>
+      <td>
+        {% with card=g.today_duty_card %}
+        {% if card %}{{ card.maxOnDuty }}（{{ card.shiftName }}）{% else %}<span class="muted">未建卡</span>{% endif %}
+        {% endwith %}
+      </td>
+      <td>{{ g.withering_now }}</td>
       <td>{{ g.notes|default:"—" }}</td>
       <td class="actions">
         <a class="btn btn-sm btn-secondary" href="{% url 'garden_edit' g.pk %}">编辑</a>

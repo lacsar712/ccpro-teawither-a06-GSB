@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}萎凋值班{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>萎凋值班卡</h1>
+  <div class="actions">
+    <button class="btn btn-secondary btn-sm"
+            hx-get="{% url 'duty_list' %}"
+            hx-target="#duty-table"
+            hx-swap="innerHTML">刷新列表</button>
+    <a class="btn" href="{% url 'duty_create' %}">新建值班卡</a>
+  </div>
+</div>
+<div class="card" id="duty-table">
+  {% include "duty/_table.html" %}
+</div>
+<p class="muted">计数口径：槽位改入「萎凋中」时，按该园当前萎凋中槽数（实时）与当日最新值班卡上限比较；已达上限或当日无卡均拒绝改态。</p>
+{% endblock %}

@@ -16,6 +16,18 @@ urlpatterns = [
         views.GardenDeleteView.as_view(),
         name="garden_delete",
     ),
+    path("duty/", views.DutyCardListView.as_view(), name="duty_list"),
+    path("duty/new/", views.DutyCardCreateView.as_view(), name="duty_create"),
+    path(
+        "duty/<int:pk>/edit/",
+        views.DutyCardUpdateView.as_view(),
+        name="duty_edit",
+    ),
+    path(
+        "duty/<int:pk>/delete/",
+        views.DutyCardDeleteView.as_view(),
+        name="duty_delete",
+    ),
     path("troughs/", views.TroughListView.as_view(), name="trough_list"),
     path("troughs/new/", views.TroughCreateView.as_view(), name="trough_create"),
     path(

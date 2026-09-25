@@ -1,12 +1,26 @@
 from django.contrib import admin
 
-from .models import Garden, Trough, WitherBatch
+from .models import Garden, Trough, WitherBatch, WitherDutyCard
 
 
 @admin.register(Garden)
 class GardenAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "altitudeBand")
     search_fields = ("name", "altitudeBand")
+
+
+@admin.register(WitherDutyCard)
+class WitherDutyCardAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "garden",
+        "dutyDate",
+        "shiftName",
+        "maxOnDuty",
+        "supervisor",
+    )
+    list_filter = ("dutyDate", "garden")
+    search_fields = ("shiftName", "supervisor")
 
 
 @admin.register(Trough)
